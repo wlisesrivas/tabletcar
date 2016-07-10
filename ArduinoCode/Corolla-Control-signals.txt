@@ -1,0 +1,40 @@
+:: Control del Guia
+
+Mode       => Azul + Rosado
+Vol Up     =>
+Vol Down   =>
+Next Track => Azul + Marron
+Prev Track =>
+
+:: Cables de control ::
+Azul, Marron, Rosado
+
+-------------------------------------------
+Ohm, Arduino
+-------------------------------------------
+Azul y Marron
+-------------------------------------------
+Mode       =>
+Vol Up     => 950.97 ohm
+Vol Down   => 2986.02 ohm
+Next Track => 0.96 ohm
+Prev Track => 306.47 ohm
+REPOSO     => 125095 ohm
+
+-------------------------------------------
+Ohm, con el tester
+-------------------------------------------
+Azul y Marron
+-------------------------------------------
+Mode       =>
+Vol Up     => 0.999 k ohm
+Vol Down   => 3.099 k ohm
+Next Track => 1.000 ohm
+Prev Track => 330.5 ohm
+
+-------------------------------------------
+ Directo
+-------------------------------------------
+-------------------------------------------
+ Mode => Azul + Rosado
+-------------------------------------------
