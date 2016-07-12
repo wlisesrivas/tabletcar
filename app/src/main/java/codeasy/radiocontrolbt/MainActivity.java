@@ -56,16 +56,16 @@ public class MainActivity extends AppCompatActivity {
 
         // todo fill show dropdown with available bluetooth
 
-        /*
+        
         List<String> list = new ArrayList<String>();
         for (BluetoothDevice bt : pairedDevices) {
             list.add(bt.getName());
             //adapter.add(bt.getName());
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.activity_main, list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, list);
         devicesList.setAdapter(adapter);
-        */
+        
     }
 
     public void testAction(View view) {
