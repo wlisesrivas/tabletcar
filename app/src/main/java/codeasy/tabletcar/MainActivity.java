@@ -1,4 +1,4 @@
-package codeasy.radiocontrolbt;
+package codeasy.tabletcar;
 
 import android.app.Instrumentation;
 import android.bluetooth.BluetoothAdapter;
@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -18,7 +17,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -27,32 +25,26 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private Intent intent;
     Spinner devicesList;
 
-    private static MainActivity activity;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
             msg("This Devices does not support Bluetooth");
             System.exit(0);
         }
 
-        activity = this;
-
         devicesList = (Spinner) findViewById(R.id.devicesList);
         devicesList.setOnItemSelectedListener(this);
         refreshDevices(null);
+
         // Start service
-        intent = new Intent(this, AppService.class);
-        startService(intent);
+//        intent = new Intent(this, AppService.class);
+//        startService(intent);
 
-    }
-
-    public static MainActivity getInstance() {
-        return activity;
     }
 
     public void refreshDevices(View view) {
@@ -75,10 +67,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, list);
         devicesList.setAdapter(adapter);
-
-        // Start activity
-        Intent theActivity = new Intent(this, TheActivity.class);
-        startActivity(theActivity);
 
     }
 
@@ -131,9 +119,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if(!device.createBond())
                 msg("Error trying to connect, not devices bond");
-            else
-                msg(String.format("Connected to [%s].", selected));
         }
+
+        msg(String.format("Connected to [%s].", selected));
+        new ConnectThread(device, mBluetoothAdapter).start();
 
 //        AcceptThread acceptThread = new AcceptThread(selected);
 //        acceptThread.start();

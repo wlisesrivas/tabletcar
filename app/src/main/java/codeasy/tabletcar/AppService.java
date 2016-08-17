@@ -1,10 +1,8 @@
-package codeasy.radiocontrolbt;
+package codeasy.tabletcar;
 
 import android.app.Instrumentation;
 import android.app.IntentService;
 import android.content.Intent;
-import android.util.Log;
-import android.view.KeyEvent;
 
 /**
  * Created by wlisesrivas on 7/3/2016.
