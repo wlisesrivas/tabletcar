@@ -33,6 +33,17 @@ public class MainActivity extends AppCompatActivity {
         btnConnect = (Button) findViewById(R.id.btnConnect);
         lblOutput = (TextView) findViewById(R.id.lblOutput);
 
+        // get service
+        mSerial = new PL2303Driver((UsbManager) getSystemService(Context.USB_SERVICE),
+                this, ACTION_USB_PERMISSION);
+
+        // check USB host function.
+        if (!mSerial.PL2303USBFeatureSupported()) {
+            msg("No Support USB host API");
+            mSerial = null;
+            return;
+        }
+
         // Start service
 //        intent = new Intent(this, AppService.class);
 //        startService(intent);
@@ -75,24 +86,8 @@ public class MainActivity extends AppCompatActivity {
     public void connectAction(View view) {
         btnConnect.setText("Connecting...");
 
-        // get service
-        mSerial = new PL2303Driver((UsbManager) getSystemService(Context.USB_SERVICE),
-                this, ACTION_USB_PERMISSION);
-
-        // check USB host function.
-        if (!mSerial.PL2303USBFeatureSupported()) {
-            msg("No Support USB host API");
-            mSerial = null;
-            return;
-        }
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         if(mSerial.isConnected()) {
-            if (!mSerial.InitByBaudRate(mBaudrate,1000)) {
+            if (!mSerial.InitByBaudRate(mBaudrate, 700)) {
                 if(!mSerial.PL2303Device_IsHasPermission()) {
                     msg("cannot open, maybe no permission");
                 }
@@ -107,10 +102,54 @@ public class MainActivity extends AppCompatActivity {
 
         } else {
             msg("Error trying to connect");
-            mSerial.end();
-            mSerial = null;
             btnConnect.setText("Connect");
         }
+    }
+
+    private void readDataFromSerial() {
+        int len;
+        byte[] rbuf = new byte[20];
+        StringBuffer sbHex=new StringBuffer();
+        if(null==mSerial)
+            return;
+        if(!mSerial.isConnected())
+            return;
+        len = mSerial.read(rbuf);
+        if(len<0) {
+            return;
+        }
+
+        if (len > 0) {
+            for (int j = 0; j < len; j++) {
+                sbHex.append((char) (rbuf[j] & 0x000000FF));
+            }
+            lblOutput.setText(sbHex.toString());
+            Toast.makeText(this, "len="+len, Toast.LENGTH_SHORT).show();
+        }
+        else {
+            lblOutput.setText("[empty]");
+            return;
+        }
+
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void writeDataToSerial(String strWrite) {
+        if(null==mSerial)
+            return;
+        if(!mSerial.isConnected())
+            return;
+
+        int res = mSerial.write(strWrite.getBytes(), strWrite.length());
+        if( res<0 )
+            return;
+
+        msg("Write length: "+strWrite.length()+" bytes");
     }
 
     @Override
@@ -121,5 +160,20 @@ public class MainActivity extends AppCompatActivity {
             mSerial = null;
         }
         super.onDestroy();
+    }
+
+    public void onResume() {
+        super.onResume();
+        //if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action))
+        if(!mSerial.isConnected()) {
+            msg("New instance : " + mSerial);
+            if( !mSerial.enumerate() ) {
+                msg("no more devices found");
+                return;
+            } else {
+                msg("onResume:enumerate succeeded!");
+            }
+        }//if isConnected
+        msg("attached");
     }
 }
