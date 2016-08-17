@@ -36,6 +36,7 @@ float R1 = 985;
 // The resistance value your unknown resistor value in Ohms.
 float R2 = 0;
 float buffer = 0;
+int tol = 100; // 100 ohms tolerance.
 
 void setup()
 {
@@ -70,10 +71,37 @@ void loop()
     {
       Serial.print("R2: ");
       Serial.println(R2);
+      handleInput(R2);
       delay(10);
     }
     
   }
 }
+
+void handleInput(float ohm) {
+   // Volumen Up
+   if(ohm
+}
+
+void send() {
+  // Protocol WBS (Wlises Button Status)
+  // WPP1 => Power on
+  // WPP0 => Power off
+  // WVU1 => Volumen Up on
+  // WVU0 => Volumen Up off
+  // WVD1 => Volumen Down on
+  // WVD0 => Volumen Down off
+  // WNT1 => Next Track on
+  // WNT0 => Next Track off
+  // WPT1 => Prev Track on
+  // WPT0 => Prev Track off
+
+  String cmd = "W";
+  
+  
+}
+
+
+
 
 
