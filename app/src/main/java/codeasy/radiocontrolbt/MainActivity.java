@@ -4,11 +4,13 @@ import android.app.Instrumentation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -16,12 +18,16 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     BluetoothAdapter mBluetoothAdapter;
     Set<BluetoothDevice> pairedDevices;
+    private Intent intent;
     Spinner devicesList;
+
+    private static MainActivity activity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,18 +36,26 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
-            Toast.makeText(this, "This Devices does not support Bluetooth", Toast.LENGTH_LONG).show();
+            msg("This Devices does not support Bluetooth");
             System.exit(0);
         }
 
+        activity = this;
+
         devicesList = (Spinner) findViewById(R.id.devicesList);
-        refreshDevices();
+        devicesList.setOnItemSelectedListener(this);
+        refreshDevices(null);
         // Start service
-        Intent intent = new Intent(this, AppService.class);
+        intent = new Intent(this, AppService.class);
         startService(intent);
+
     }
 
-    public void refreshDevices() {
+    public static MainActivity getInstance() {
+        return activity;
+    }
+
+    public void refreshDevices(View view) {
         // enable bluetooth if not
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -54,23 +68,18 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        // todo fill show dropdown with available bluetooth
-
-        
         List<String> list = new ArrayList<String>();
         for (BluetoothDevice bt : pairedDevices) {
             list.add(bt.getName());
-            //adapter.add(bt.getName());
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, list);
         devicesList.setAdapter(adapter);
-        
-    }
 
-    public void testAction(View view) {
-        // Do the test action click
-        takeControl();
+        // Start activity
+        Intent theActivity = new Intent(this, TheActivity.class);
+        startActivity(theActivity);
+
     }
 
     private void takeControl() {
@@ -97,5 +106,41 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }).start();
+    }
+
+    /**
+     * Toast message.
+     * @param str
+     */
+    public void msg(String str) {
+        Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        String selected = adapterView.getItemAtPosition(i).toString();
+        BluetoothDevice device = null;
+        for (BluetoothDevice bt : mBluetoothAdapter.getBondedDevices()) {
+            if(bt.getName().equals(selected)) {
+                device = bt;
+                break;
+            }
+        }
+        if(device == null) return;
+        // Connect to device
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if(!device.createBond())
+                msg("Error trying to connect, not devices bond");
+            else
+                msg(String.format("Connected to [%s].", selected));
+        }
+
+//        AcceptThread acceptThread = new AcceptThread(selected);
+//        acceptThread.start();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
     }
 }

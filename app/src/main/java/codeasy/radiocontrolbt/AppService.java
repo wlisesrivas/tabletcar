@@ -9,13 +9,15 @@ import android.view.KeyEvent;
 /**
  * Created by wlisesrivas on 7/3/2016.
  */
-public class AppService extends IntentService {
+public class AppService extends IntentService implements Runnable {
 
+    Thread thread;
     Instrumentation inst;
 
     public AppService() {
-        super("RadioControlBT");
+        super("TabletCar");
         inst = new Instrumentation();
+        thread = new Thread(this);
 //        inst.sendKeyDownUpSync(KeyEvent.KEYCODE_VOLUME_DOWN);
     }
 
@@ -26,15 +28,12 @@ public class AppService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.i("RadioControl ::", "El Servicio ha iniciado");
-        while(true) {
-            try {
-                Log.i("RadioControl ::", "Servicio corriendo...");
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+//        thread.start();
+    }
 
+    @Override
+    public void run() {
+//        MainActivity.getInstance().msg("El Servicio ha iniciado");
+//        while(true) {        }
     }
 }
