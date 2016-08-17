@@ -1,85 +1,41 @@
 package codeasy.radiocontrolbt;
 
 import android.app.Instrumentation;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.support.v7.app.AppCompatActivity;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import tw.com.prolific.driver.pl2303.PL2303Driver;
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity {
 
-    BluetoothAdapter mBluetoothAdapter;
-    Set<BluetoothDevice> pairedDevices;
     private Intent intent;
-    Spinner devicesList;
 
-    private static MainActivity activity;
+    private Button btnConnect;
+    private TextView lblOutput;
+    private static final String ACTION_USB_PERMISSION = "codeasy.radiocontrolbt.USB_PERMISSION";
+    private PL2303Driver.BaudRate mBaudrate = PL2303Driver.BaudRate.B9600;
+    private PL2303Driver mSerial;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            // Device does not support Bluetooth
-            msg("This Devices does not support Bluetooth");
-            System.exit(0);
-        }
 
-        activity = this;
+        btnConnect = (Button) findViewById(R.id.btnConnect);
+        lblOutput = (TextView) findViewById(R.id.lblOutput);
 
-        devicesList = (Spinner) findViewById(R.id.devicesList);
-        devicesList.setOnItemSelectedListener(this);
-        refreshDevices(null);
         // Start service
-        intent = new Intent(this, AppService.class);
-        startService(intent);
-
-    }
-
-    public static MainActivity getInstance() {
-        return activity;
-    }
-
-    public void refreshDevices(View view) {
-        // enable bluetooth if not
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, 1);
-        }
-
-        pairedDevices = mBluetoothAdapter.getBondedDevices();
-        if(pairedDevices.size() == 0) {
-            Toast.makeText(this, "There are no paired devices.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        List<String> list = new ArrayList<String>();
-        for (BluetoothDevice bt : pairedDevices) {
-            list.add(bt.getName());
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, android.R.id.text1, list);
-        devicesList.setAdapter(adapter);
-
-        // Start activity
-        Intent theActivity = new Intent(this, TheActivity.class);
-        startActivity(theActivity);
-
+//        intent = new Intent(this, AppService.class);
+//        startService(intent);
     }
 
     private void takeControl() {
@@ -116,31 +72,54 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        String selected = adapterView.getItemAtPosition(i).toString();
-        BluetoothDevice device = null;
-        for (BluetoothDevice bt : mBluetoothAdapter.getBondedDevices()) {
-            if(bt.getName().equals(selected)) {
-                device = bt;
-                break;
-            }
+    public void connectAction(View view) {
+        btnConnect.setText("Connecting...");
+
+        // get service
+        mSerial = new PL2303Driver((UsbManager) getSystemService(Context.USB_SERVICE),
+                this, ACTION_USB_PERMISSION);
+
+        // check USB host function.
+        if (!mSerial.PL2303USBFeatureSupported()) {
+            msg("No Support USB host API");
+            mSerial = null;
+            return;
         }
-        if(device == null) return;
-        // Connect to device
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if(!device.createBond())
-                msg("Error trying to connect, not devices bond");
-            else
-                msg(String.format("Connected to [%s].", selected));
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-//        AcceptThread acceptThread = new AcceptThread(selected);
-//        acceptThread.start();
+        if(mSerial.isConnected()) {
+            if (!mSerial.InitByBaudRate(mBaudrate,1000)) {
+                if(!mSerial.PL2303Device_IsHasPermission()) {
+                    msg("cannot open, maybe no permission");
+                }
+                if(mSerial.PL2303Device_IsHasPermission() && (!mSerial.PL2303Device_IsSupportChip())) {
+                    msg("cannot open, maybe this chip has no support, please use PL2303HXD / RA / EA chip.");
+                }
+            } else {
+                msg("Connected ...");
+                btnConnect.setText("[Disconnect]");
+                return;
+            }
+
+        } else {
+            msg("Error trying to connect");
+            mSerial.end();
+            mSerial = null;
+            btnConnect.setText("Connect");
+        }
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
+    protected void onDestroy() {
+        msg("Enter onDestroy");
+        if(mSerial!=null) {
+            mSerial.end();
+            mSerial = null;
+        }
+        super.onDestroy();
     }
 }
