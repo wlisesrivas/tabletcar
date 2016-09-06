@@ -1,7 +1,10 @@
 package codeasy.tabletcar;
 
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.util.Log;
+
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,12 +17,13 @@ public class ManageConnectedSocket extends Thread {
     private final BluetoothSocket mmSocket;
     private final InputStream mmInStream;
     private final OutputStream mmOutStream;
+    private final Context context;
 
-    public ManageConnectedSocket(BluetoothSocket socket) {
+    public ManageConnectedSocket(BluetoothSocket socket, Context context) {
         mmSocket = socket;
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
-
+        this.context = context;
         // Get the input and output streams, using temp objects because
         // member streams are final
         try {
@@ -37,19 +41,14 @@ public class ManageConnectedSocket extends Thread {
 
         // Keep listening to the InputStream until an exception occurs
         while (true) {
-//            try {
+            try {
                 // Read from the InputStream
-//                bytes = mmInStream.read(buffer);
-                Scanner scanner = new Scanner(mmInStream);
-                while(scanner.hasNext()) {
-                    String str = scanner.next();
-                    Log.i("BLUETOOTH REC: ", str);
-                }
-                // Send the obtained bytes to the UI activity
-//                mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
-//            } catch (IOException e) {
-//                break;
-//            }
+                bytes = mmInStream.read(buffer);
+                String str = new String(buffer, "UTF-8");
+                TabletAction.handler(str, context);
+            } catch (IOException e) {
+                break;
+            }
         }
     }
 

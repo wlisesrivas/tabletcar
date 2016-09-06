@@ -20,7 +20,8 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    BluetoothAdapter mBluetoothAdapter;
+    public static BluetoothAdapter mBluetoothAdapter;
+    public static BluetoothDevice device;
     Set<BluetoothDevice> pairedDevices;
     private Intent intent;
     Spinner devicesList;
@@ -40,11 +41,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         devicesList = (Spinner) findViewById(R.id.devicesList);
         devicesList.setOnItemSelectedListener(this);
         refreshDevices(null);
+    }
 
-        // Start service
-//        intent = new Intent(this, AppService.class);
-//        startService(intent);
-
+    public void startServiceReady() {
+        startService(new Intent(this, AppService.class));
     }
 
     public void refreshDevices(View view) {
@@ -70,32 +70,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     }
 
-    private void takeControl() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Instrumentation inst = new Instrumentation();
-                try {
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_VOLUME_DOWN);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_VOLUME_DOWN);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_VOLUME_UP);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_VOLUME_UP);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_MEDIA_PLAY);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_MEDIA_NEXT);
-                    Thread.sleep(500);
-                    inst.sendKeyDownUpSync(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
     /**
      * Toast message.
      * @param str
@@ -107,7 +81,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         String selected = adapterView.getItemAtPosition(i).toString();
-        BluetoothDevice device = null;
         for (BluetoothDevice bt : mBluetoothAdapter.getBondedDevices()) {
             if(bt.getName().equals(selected)) {
                 device = bt;
@@ -122,10 +95,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         msg(String.format("Connected to [%s].", selected));
-        new ConnectThread(device, mBluetoothAdapter).start();
-
-//        AcceptThread acceptThread = new AcceptThread(selected);
-//        acceptThread.start();
+        startServiceReady();
+//        new ConnectThread(device, mBluetoothAdapter, this).start();
     }
 
     @Override

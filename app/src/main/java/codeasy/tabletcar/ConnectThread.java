@@ -3,6 +3,7 @@ package codeasy.tabletcar;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -11,15 +12,17 @@ public class ConnectThread extends Thread {
     private final BluetoothSocket mmSocket;
     private final BluetoothDevice mmDevice;
     private final BluetoothAdapter mBluetoothAdapter;
+    private final Context context;
     // SPP UUID service
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-    public ConnectThread(BluetoothDevice device, BluetoothAdapter bluetoothAdapter) {
+    public ConnectThread(BluetoothDevice device, BluetoothAdapter bluetoothAdapter, Context context) {
         // Use a temporary object that is later assigned to mmSocket,
         // because mmSocket is final
         BluetoothSocket tmp = null;
         mBluetoothAdapter = bluetoothAdapter;
         mmDevice = device;
+        this.context = context;
 
         // Get a BluetoothSocket to connect with the given BluetoothDevice
         try {
@@ -46,7 +49,7 @@ public class ConnectThread extends Thread {
         }
 
         // Do work to manage the connection (in a separate thread)
-        new ManageConnectedSocket(mmSocket).start();
+        new ManageConnectedSocket(mmSocket, this.context).start();
     }
 
     /** Will cancel an in-progress connection, and close the socket */

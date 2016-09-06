@@ -1,66 +1,78 @@
-
-#include <SoftwareSerial.h>
-
-// creates a "virtual" serial port/UART
-// connect BT module TX to D10
-// connect BT module RX to D11
-// connect BT Vcc to 5V, GND to GND
-
-SoftwareSerial BT(10, 11); 
-
 // ---------------------------------------------------------
 // Salidas
 // ---------------------------------------------------------
+
+// Vol Up button pin
+#define BTN_VOL_UP 10
+
+// Vol Up button pin
+#define BTN_VOL_DOWN 11
+
 // Power button pin
-int BTN_POWER    = 1;
-
-// Vol Up button pin
-int BTN_VOL_UP   = 2;
-
-// Vol Up button pin
-int BTN_VOL_DOWN = 3;
+#define BTN_POWER 12
 
 // SWICHT
-int ON  = 0;
-int OFF = 1;
+#define ON  0
+#define OFF 1
 
 // Read ohms, @Link: http://www.circuitbasics.com/arduino-ohm-meter/
 // The program sets up analog pin A0 to read the voltage between the known resistor and the unknown resistor
-int analogPin = 0;
+#define APIN 0
+
+#define Vin 5 // 5v
+
 int raw = 0;
-int Vin = 5; // 5v
+
 // The voltage drop across your unknown resistor:
 float Vout = 0;
+
 // The known resistor (1 kOhm = 1000 Ohms in this example).
-float R1 = 985;
+#define R1 2100.0
+
 // The resistance value your unknown resistor value in Ohms.
 float R2 = 0;
+
 float buffer = 0;
-int tol = 100; // 100 ohms tolerance.
+
+// ------------------------------------------------------------------
+// Ohms values.
+// Round a number to the nearest hundred. e.g. 
+// 990 = 1000, 940 = 900, 40 = 0, 55 = 100 etc ...
+// ------------------------------------------------------------------
+
+#define ROUND_OHM_NUM  100 
+#define OHM_MODE       0 // is fixed
+
+#define OHM_VOL_UP     900
+#define OHM_VOL_DOWN   3000
+#define OHM_NEXT_TRACK 0 // 1 ohm
+#define OHM_PREV_TRACK 300
 
 void setup()
 {
   pinMode(BTN_POWER, OUTPUT);
   pinMode(BTN_VOL_UP, OUTPUT);
   pinMode(BTN_VOL_DOWN, OUTPUT);
-  
+  Serial.begin(9600);
+  Serial.print("Ready!");
   // Turn off at start
-  digitalWrite(BTN_POWER, OFF);
+  clearAll();
+}
+
+void clearAll() {
+  digitalWrite(BTN_POWER, LOW);
   digitalWrite(BTN_VOL_UP, OFF);
   digitalWrite(BTN_VOL_DOWN, OFF);
-  
-  // Set the data rate for the SoftwareSerial port
-  BT.begin(9600);
-  delay(50);
-  BT.println("Codeasy SRL. 2016, Welcome to wRadio - Bluetooth Interface");
-  
-  Serial.begin(9600);
+}
+
+int roundOhm(int val) {
+  return round(val / ROUND_OHM_NUM) * ROUND_OHM_NUM;
 }
 
 void loop()
 {
   // Read ohms
-  raw = analogRead(analogPin);
+  raw = analogRead(APIN);
   if (raw)
   {
     buffer = raw * Vin;
@@ -69,39 +81,28 @@ void loop()
     R2 = R1 * buffer;
     if(R2 < 10000) 
     {
-      Serial.print("R2: ");
-      Serial.println(R2);
-      handleInput(R2);
-      delay(10);
-    }
-    
+      int rohm = roundOhm(R2);
+      Serial.print("Ohm: ");
+      Serial.println(rohm);
+      switch(rohm) {
+        case OHM_VOL_UP:
+            digitalWrite(BTN_VOL_UP, ON);
+            Serial.println("Volume Up");
+            break;
+        case OHM_VOL_DOWN:
+            digitalWrite(BTN_VOL_DOWN, ON);
+            Serial.println("Volume Down");
+            break;
+        case OHM_NEXT_TRACK:
+          Serial.println("Next Track");
+          break;
+        case OHM_PREV_TRACK:
+          Serial.println("Prev Track");
+            break; // TODO
+      }
+    } else clearAll();
+    delay(125);
   }
+  delay(10);
 }
-
-void handleInput(float ohm) {
-   // Volumen Up
-   if(ohm
-}
-
-void send() {
-  // Protocol WBS (Wlises Button Status)
-  // WPP1 => Power on
-  // WPP0 => Power off
-  // WVU1 => Volumen Up on
-  // WVU0 => Volumen Up off
-  // WVD1 => Volumen Down on
-  // WVD0 => Volumen Down off
-  // WNT1 => Next Track on
-  // WNT0 => Next Track off
-  // WPT1 => Prev Track on
-  // WPT0 => Prev Track off
-
-  String cmd = "W";
-  
-  
-}
-
-
-
-
 
